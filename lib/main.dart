@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_course/answer.dart';
 import 'package:html_unescape/html_unescape.dart';
@@ -43,7 +45,6 @@ class MyAppState extends State<MyApp> {
   void _getNewQuestion() {
     setState(() {
       _futureQuestion = fetchQuestion();
-    
     });
   }
 
@@ -57,7 +58,7 @@ class MyAppState extends State<MyApp> {
         body: Column(
             children: <Widget>[
               QuestionWidget(_futureQuestion),
-              AnswerWidget(_futureQuestion),
+              MyAnswerWidget(_futureQuestion,fetchQuestion),
               RaisedButton(child: Text('New Question'), onPressed: _getNewQuestion),
             ],
         ),
@@ -73,22 +74,30 @@ class Question {
   final String difficulty;
   final String type;
   final String correctAnswer;
-  final List<String> choices;
+  final Map<String, bool> choices; //Question -> correct answer boolean 
 
   Question({this.questionText, this.category, this.difficulty, this.type, this.correctAnswer,
             this.choices});
 
   factory Question.fromJson(Map<String, dynamic> json) {
+    Map<String, bool> map = {};
+    for (var choice in json['results'][0]['incorrect_answers'].cast<String>())
+    {
+      map.putIfAbsent(choice.toString(), () => false);
+    }
+    map.putIfAbsent(json['results'][0]['correct_answer'], () => true);
+
+    print(map.toString());
     Question question = new Question(
       questionText: json['results'][0]['question'],
       category: json['results'][0]['category'],
       difficulty: json['results'][0]['difficulty'],
       type: json['results'][0]['type'],
       correctAnswer: json['results'][0]['correct_answer'],
-      choices: json['results'][0]['incorrect_answers'].cast<String>(),
+      choices: map,
     );
-    question.choices.add(json['results'][0]['correct_answer']);
-    question.choices.shuffle();
+    // question.choices.add(json['results'][0]['correct_answer']);
+    // question.choices.shuffle();
     // print(question.choices);
     return question;
   }

@@ -2,21 +2,35 @@ import 'package:flutter/material.dart';
 
 import './main.dart';
 
-class AnswerWidget extends StatefulWidget {
-  final Future<Question> futureQuestion;
-  AnswerWidget(this.futureQuestion);
+class MyAnswerWidget extends StatefulWidget {
+  Future<Question> futureQuestion;
+  Function func;
 
+  MyAnswerWidget(this.futureQuestion, this.func);
   @override
   State<StatefulWidget> createState() {
-    return new AnswerWidgetState(futureQuestion);
+    return AnswerWidget(futureQuestion, func);
   }
+  
 }
 
-class AnswerWidgetState extends State<AnswerWidget> {
-  final Future<Question> futureQuestion;
-  Color _buttonColor1 = Colors.grey;
+class AnswerWidget extends State<MyAnswerWidget> {
+  Future<Question> futureQuestion;
+  int showColor = 0;
+  Function func;
 
-  AnswerWidgetState(this.futureQuestion);
+  AnswerWidget(Future<Question> futureQuestion, Function func) {
+      this.futureQuestion = futureQuestion;
+      this.func = func;
+  }
+
+  void temp() {
+    setState(() {
+      showColor = 1;
+    });
+    new Future.delayed(const Duration(seconds: 2), () => "2");
+    func.call();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,25 +41,15 @@ class AnswerWidgetState extends State<AnswerWidget> {
           future: futureQuestion,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
-              print(snapshot.data.choices);
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  for(String item in snapshot.data.choices) 
+                  for (var entry in snapshot.data.choices.entries)
                     RaisedButton(
-                      color: _buttonColor1,
-                      child: Text(item), 
-                      onPressed: () {
-                        setState(() {
-                          if (item == snapshot.data.correctAnswer) {
-                            _buttonColor1 = Colors.green;
-                          }
-                          else {
-                            _buttonColor1 = Colors.red;
-                          }
-                        });
-                      }
+                      color: showColor == 1 ? entry.value ? Colors.green : Colors.red : Colors.grey,
+                      child: Text(entry.key), 
+                      onPressed: temp
                     ),
                 ],
               );
