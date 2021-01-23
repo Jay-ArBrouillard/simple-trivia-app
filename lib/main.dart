@@ -1,14 +1,5 @@
-import 'dart:collection';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_course/answer.dart';
-import 'package:html_unescape/html_unescape.dart';
-
-import 'package:http/http.dart' as http;
-
-import 'dart:convert';
-
-import './question.dart';
+import 'package:flutter_course/Quiz.dart';
 
 void main() => runApp(MyApp());
 
@@ -19,93 +10,85 @@ class MyApp extends StatefulWidget {
   }
 }
 
-Future<Question> fetchQuestion() async {
-  final response = await http.get('https://opentdb.com/api.php?amount=1');
-
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    return Question.fromJson(jsonDecode(response.body));
-  } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Failed to load Question');
-  }
-}
 
 class MyAppState extends State<MyApp> {
-  Future<Question> _futureQuestion;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureQuestion = fetchQuestion();
-  }
-
-  void _getNewQuestion() {
-    setState(() {
-      _futureQuestion = fetchQuestion();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-            title: Text('Trivia Application'),
-        ),
-        body: Column(
-            children: <Widget>[
-              QuestionWidget(_futureQuestion),
-              MyAnswerWidget(_futureQuestion,fetchQuestion),
-              RaisedButton(child: Text('New Question'), onPressed: _getNewQuestion),
-            ],
-        ),
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: "productsans"),
+      home: HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.blueAccent,
+      body: Container(
+        child:SingleChildScrollView(
+          child: Column(
+            // Column accepts multiple children widgets
+            children: <Widget> [
+              SizedBox(
+                height: 90
+              ),
+
+              Center(child:
+                Image(
+                  image: AssetImage("assets/icon-circle.png"),
+                  width: 300,
+                  height: 300,
+                )
+              ),
+
+              Text("Quizimus",
+                style: 
+                  TextStyle(
+                    color: Color(0xFFA20CBE),
+                    fontSize: 80,
+                  )
+              ),
+
+              Container(
+                width: MediaQuery.of(context).size.width,
+                margin: EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 20,
+                ),
+                child: RaisedButton(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 20,
+                    horizontal: 40,
+                  ),
+                  child: 
+                    Text("PLAY",
+                      style: TextStyle(
+                        fontSize: 32,
+                      ),
+                    ),
+                  color: Color(0xFFFFBA00),
+                  textColor: Colors.white,
+                  
+                  onPressed: () {
+                    //go to quiz screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Quiz()
+                      )
+                    );
+                  },
+                ),
+              ),
+            ]
+          ),
+        )
       ),
     );
   }
+  
 }
-
-class Question {
-  Future<Question> futureQuestion;
-  final String questionText;
-  final String category;
-  final String difficulty;
-  final String type;
-  final String correctAnswer;
-  final Map<String, bool> choices; //Question -> correct answer boolean 
-
-  Question({this.questionText, this.category, this.difficulty, this.type, this.correctAnswer,
-            this.choices});
-
-  factory Question.fromJson(Map<String, dynamic> json) {
-    Map<String, bool> map = {};
-    for (var choice in json['results'][0]['incorrect_answers'].cast<String>())
-    {
-      map.putIfAbsent(choice.toString(), () => false);
-    }
-    map.putIfAbsent(json['results'][0]['correct_answer'], () => true);
-
-    print(map.toString());
-    Question question = new Question(
-      questionText: json['results'][0]['question'],
-      category: json['results'][0]['category'],
-      difficulty: json['results'][0]['difficulty'],
-      type: json['results'][0]['type'],
-      correctAnswer: json['results'][0]['correct_answer'],
-      choices: map,
-    );
-    // question.choices.add(json['results'][0]['correct_answer']);
-    // question.choices.shuffle();
-    // print(question.choices);
-    return question;
-  }
-
-  String getDisplayQuestion() {
-    var unescape = new HtmlUnescape();
-    return unescape.convert(questionText);
-  }
-}
-
-
